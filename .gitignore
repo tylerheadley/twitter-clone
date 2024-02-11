@@ -1,4 +1,3 @@
-.env.prod
 .env.prod.db
 
 ./services/web/env/
