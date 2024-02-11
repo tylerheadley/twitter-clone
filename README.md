@@ -6,9 +6,10 @@ This repository serves as a comprehensive implementation of a Flask web applicat
 
 <img src=media_upload.gif width=400px />
 
-##Build Instructions
 
-To bring up the services, follow these steps:
+## Build Instructions
+
+**To bring up the services, follow these steps:**
 
 First, clone this repository and navigate to the project directory.
 
@@ -17,7 +18,6 @@ To build and run the development containers:
 ```
 $ docker-compose up -d --build
 ```
-
 Access the Flask app at http://localhost:1341/.
 
 To stop the containers:
@@ -27,13 +27,13 @@ $ docker-compose down -v
 ```
 
 For production, use the docker-compose.prod.yml file instead. 
-Note that you will need to add your own file .env.prod.db containing your database credentials.
+Note that you will need to add your own `.env.prod.db` text file containing your database credentials.
 
 Build and run the production containers, and initialize the PostgreSQL database:
 
 ```
 $ docker-compose -f docker-compose.prod.yml up -d --build
-docker-compose -f docker-compose.prod.yml exec web python manage.py create_db
+$ docker-compose -f docker-compose.prod.yml exec web python manage.py create_db
 ```
 
 Access the production Flask app at http://localhost:1337/.
