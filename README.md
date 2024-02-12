@@ -2,7 +2,7 @@
 
 ## Overview
 
-This repository serves as a comprehensive implementation of a Flask web application Dockerized for both development and production environments. Following the the tutorial from [testdriven.io](https://testdriven.io/blog/dockerizing-flask-with-postgres-gunicorn-and-nginx) , the project incorporates Flask, Postgres, Gunicorn, and Nginx, demonstrating how to handle static and user-uploaded media files. The development environment uses Flask's built-in server, while the production setup involves Gunicorn and Nginx as a reverse proxy. The final result is a webpage where users can upload image files, which are then stored using Docker volumes and can be retrieved.
+This repository contains an implementation of a Flask web application Dockerized for both development and production environments. Following the the tutorial from [testdriven.io](https://testdriven.io/blog/dockerizing-flask-with-postgres-gunicorn-and-nginx), the project incorporates Flask, Postgres, Gunicorn, and Nginx, demonstrating how to handle static and user-uploaded media files. The development environment uses Flask's built-in server, while the production setup uses the Gunicorn HTTP server and Nginx as a reverse proxy. The final result is a webpage where users can upload image files, which are then stored using Docker volumes and can be retrieved.
 
 <img src=media_upload.gif width=400px />
 
