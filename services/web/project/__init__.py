@@ -5,8 +5,13 @@ from flask import (
     jsonify,
     send_from_directory,
     request,
+    render_template
 )
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import text
+import sqlalchemy
+import psycopg2
+from sqlalchemy import create_engine
 from werkzeug.utils import secure_filename
 
 
@@ -27,8 +32,53 @@ class User(db.Model):
 
 
 @app.route("/")
-def hello_world():
-    return jsonify(hola="mundo")
+def root():
+    db_url = "postgresql://postgres:pass@postgres:5432"
+    engine = sqlalchemy.create_engine(db_url, connect_args={
+         'application_name': '__init__.py root()',
+         }) 
+    connection = engine.connect()
+
+    result = connection.execute(text(
+        "SELECT u.name, u.screen_name, t.text, t.created_at "
+        "FROM tweets t "
+        "JOIN users u USING (id_users) "
+        "ORDER BY created_at DESC "
+        "LIMIT 20;"
+    ))
+
+    rows = result.fetchall()
+
+    tweets = []
+    for row in rows:
+        tweets.append({
+            'user_name': row[0],
+            'screen_name': row[1],
+            'text': row[2],
+            'created_at': row[3]
+        })
+
+    return render_template('index.html', tweets=tweets)
+
+@app.route("/login")
+def login():
+    return render_template('login.html')
+
+@app.route("/logout")
+def logout():
+    return render_template('logout.html')
+
+@app.route("/create_account")
+def create_account():
+    return render_template('create_account.html')
+
+@app.route("/create_message")
+def create_message():
+    return render_template('create_message.html')
+
+@app.route("/search")
+def search():
+    return render_template('search.html')
 
 
 @app.route("/static/<path:filename>")

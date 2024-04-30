@@ -1,0 +1,24 @@
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <title>Tyler's Twitter Clone</title>
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
+    </head>
+    <body>
+        <h1>Big Data Twitter Clone</h1>
+        <ol>
+            <li><a href='/'>Home</a></li>
+            <li><a href='/login'>Login</a></li>
+            <li><a href='/logout'>Logout</a></li>
+            <li><a href='/create_account'>Create Account</a></li>
+            <li><a href='/create_message'>Create Message</a></li>
+            <li><a href='/search'>Search</a></li>
+        </ol>
+
+        {% block content %}
+        {% endblock %}
+    </body>
+</html>
+

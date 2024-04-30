@@ -1,0 +1,29 @@
+.tweet {
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+.user-info {
+    font-weight: bold;
+}
+
+.user-name {
+    color: #333;
+}
+
+.screen-name {
+    color: #666;
+    margin-left: 5px;
+}
+
+.tweet-text {
+    margin-top: 5px;
+    margin-bottom: 10px;
+}
+
+.created-at {
+    color: #999;
+    font-size: 0.8em;
+}
