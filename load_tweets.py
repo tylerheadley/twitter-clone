@@ -351,6 +351,7 @@ if __name__ == '__main__':
     parser.add_argument('--db',required=True)
     parser.add_argument('--inputs',nargs='+',required=True)
     parser.add_argument('--print_every',type=int,default=1000)
+    parser.add_argument('--max_tweets', type=int,default=-1)
     args = parser.parse_args()
 
     # create database connection
@@ -359,6 +360,8 @@ if __name__ == '__main__':
         })
     connection = engine.connect()
 
+    tweets_inserted = 0
+    stop = False
     # loop through the input file
     # NOTE:
     # we reverse sort the filenames because this results in fewer updates to the users table,
@@ -372,7 +375,16 @@ if __name__ == '__main__':
                         # load and insert the tweet
                         tweet = json.loads(line)
                         insert_tweet(connection,tweet)
-
+                        tweets_inserted += 1
                         # print message
                         if i%args.print_every==0:
                             print(datetime.datetime.now(),filename,subfilename,'i=',i,'id=',tweet['id'])
+
+                        if args.max_tweets != -1 and tweets_inserted >= args.max_tweets:
+                            stop = True
+                            break
+                if stop:
+                    break
+        if stop:
+            break
+    print(tweets_inserted, "tweets inserted")

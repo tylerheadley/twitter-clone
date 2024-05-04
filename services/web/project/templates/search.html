@@ -1,5 +1,27 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h2>Search</h2>
+<div class="centered-container">
+    <h2>Search</h2>
+    <form class="searchbar" action="/search" method="GET">
+        <input type="text" required name="search_query" placeholder="Search Tweets">
+        <input type="submit" value="Search"> 
+    </form>
+    <div class="tweets">
+        {% for tweet in tweets %}
+        <div class="tweet">
+            <div class="user-info">
+                <span class="user-name">{{ tweet.user_name }}</span>
+                <span class="screen-name">@{{ tweet.screen_name }}</span>
+            </div>
+            <p class="tweet-text">{{ tweet.text | safe }}</p>
+            <p class="created-at">Created at: {{ tweet.created_at }}</p>
+        </div>
+        {% endfor %}
+
+        {% if next_page_url %}
+        <a href="{{ next_page_url }}">Next Page</a>
+        {% endif %}
+    </div>
+</div>
 {% endblock %}

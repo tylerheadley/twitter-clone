@@ -15,7 +15,7 @@ CREATE TABLE urls (
  * inside of a tweet someone else's tweet.
  */
 CREATE TABLE users (
-    id_users BIGINT PRIMARY KEY,
+    id_users BIGSERIAL PRIMARY KEY,
     created_at TIMESTAMPTZ,
     updated_at TIMESTAMPTZ,
     id_urls BIGINT REFERENCES urls(id_urls),
@@ -25,11 +25,12 @@ CREATE TABLE users (
     statuses_count INTEGER,
     protected BOOLEAN,
     verified BOOLEAN,
-    screen_name TEXT,
+    screen_name TEXT UNIQUE,
     name TEXT,
     location TEXT,
     description TEXT,
     withheld_in_countries VARCHAR(2)[],
+    password TEXT,
     FOREIGN KEY (id_urls) REFERENCES urls(id_urls)
 );
 
@@ -37,7 +38,7 @@ CREATE TABLE users (
  * Tweets may be entered in hydrated or unhydrated form.
  */
 CREATE TABLE tweets (
-    id_tweets BIGINT PRIMARY KEY,
+    id_tweets BIGSERIAL PRIMARY KEY,
     id_users BIGINT,
     created_at TIMESTAMPTZ,
     in_reply_to_status_id BIGINT,
@@ -103,6 +104,8 @@ CREATE TABLE tweet_media (
     FOREIGN KEY (id_urls) REFERENCES urls(id_urls),
     FOREIGN KEY (id_tweets) REFERENCES tweets(id_tweets)
 );
+
+CREATE INDEX idx_username_password ON users(screen_name, password);
 
 /*
  * Precomputes the total number of occurrences for each hashtag

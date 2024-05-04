@@ -1,5 +1,39 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h2>Create Account</h2>
+<div class="centered-container">
+    <h2 class="heading">Create Account</h2>
+    <p>Welcome to Tyler's Twitter Clone! To get started, please fill out this form to create an account.
+    {% if username_exists %}
+    <p class="error-message">ERROR: username already exists. Please try again.</p>
+    {% endif %}
+    {% if passwords_different %}
+    <p class="error-message">ERROR: passwords do not match</p>
+    {% endif %}
+
+    <form class="login-form" action="/create_account" method="POST">
+        <table>
+            <tr>
+                <td>Name</td>
+                <td><input type="text" required name="name"></td>
+            </tr>
+            <tr>
+                <td>Username</td>
+                <td><input type="text" required name="username"></td>
+            </tr>
+            <tr>
+                <td>Password</td>
+                <td><input type="password" required minlength="8" name="password1"></td>
+            </tr>
+            <tr>
+                <td>Confirm Password</td>
+                <td><input type="password" required minlength="8" name="password2"></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><input type="submit" value="Create Account"></td>
+            </tr>
+        </table>
+    </form>
+</div>
 {% endblock %}

@@ -1,5 +1,32 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h2>Login</h2>
+<div class="centered-container">
+    <h2 class="heading">Login</h2>
+
+    {% if not login_default %}
+        {% if not logged_in %}
+        <p class="error-message">ERROR: your username and password are incorrect. Please try again.</p>
+        {% else %}
+        <p class="success-message">Login Successful</p>
+        {% endif %}
+    {% endif %}
+
+    <form class="login-form" action="/login" method="POST">
+        <table>
+            <tr>
+                <td>username</td>
+                <td><input type="text" required name="username"></td>
+            </tr>
+            <tr>
+                <td>password</td>
+                <td><input type="password" required name="password"></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><input type="submit" value="Login"></td>
+            </tr>
+        </table>
+    </form>
+</div>
 {% endblock %}

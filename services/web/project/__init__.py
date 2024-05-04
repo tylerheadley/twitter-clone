@@ -1,13 +1,18 @@
 import os
-
 from flask import (
     Flask,
     jsonify,
     send_from_directory,
     request,
-    render_template
+    render_template,
+    url_for,
+    make_response,
+    redirect
 )
+import bleach
+import datetime
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy import text
 import sqlalchemy
 import psycopg2
@@ -20,32 +25,42 @@ app.config.from_object("project.config.Config")
 db = SQLAlchemy(app)
 
 
-class User(db.Model):
-    __tablename__ = "users"
-
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(128), unique=True, nullable=False)
-    active = db.Column(db.Boolean(), default=True, nullable=False)
-
-    def __init__(self, email):
-        self.email = email
+# class User(db.Model):
+#     __tablename__ = "users"
+#
+#     id = db.Column(db.Integer, primary_key=True)
+#     email = db.Column(db.String(128), unique=True, nullable=False)
+#     active = db.Column(db.Boolean(), default=True, nullable=False)
+#
+#     def __init__(self, email):
+#         self.email = email
 
 
 @app.route("/")
 def root():
+    page = int(request.args.get('page', 1))  # Get the page number from the query parameter, default to 1
+    per_page = 20  # Number of messages per page
+
     db_url = "postgresql://postgres:pass@postgres:5432"
     engine = sqlalchemy.create_engine(db_url, connect_args={
-         'application_name': '__init__.py root()',
-         }) 
+        'application_name': '__init__.py root()',
+    })
     connection = engine.connect()
 
+    # Calculate OFFSET based on the page number
+    offset = (page - 1) * per_page
+
+    # Fetch the most recent 20 messages for the current page
     result = connection.execute(text(
         "SELECT u.name, u.screen_name, t.text, t.created_at "
         "FROM tweets t "
         "JOIN users u USING (id_users) "
-        "ORDER BY created_at DESC "
-        "LIMIT 20;"
-    ))
+        "WHERE t.lang = 'en' "
+        "ORDER BY created_at DESC, u.screen_name, t.text "
+        "LIMIT :per_page OFFSET :offset;"
+    ), {'per_page': per_page, 'offset': offset})
+
+    connection.close()
 
     rows = result.fetchall()
 
@@ -56,51 +71,288 @@ def root():
             'screen_name': row[1],
             'text': row[2],
             'created_at': row[3]
-        })
+         })
 
-    return render_template('index.html', tweets=tweets)
+    # Check if there are more messages to display on next pages
+    next_page_url = None
+    if len(rows) == per_page:
+        next_page_url = url_for('root', page=page + 1)
 
-@app.route("/login")
+    return render_template('index.html', 
+        tweets=tweets, 
+        next_page_url=next_page_url,
+        logged_in=is_logged_in())
+
+
+def are_credentials_good(username, password):
+    db_url = "postgresql://postgres:pass@postgres:5432"
+    engine = sqlalchemy.create_engine(db_url, connect_args={
+        'application_name': '__init__.py root()',
+    })
+    connection = engine.connect()
+
+    result = connection.execute(text(
+        "SELECT screen_name, password "
+        "FROM users "
+        "WHERE screen_name=:username AND password=:password "
+    ), {'username': username, 'password': password})
+
+    if len(result.fetchall()) == 1:
+        return True
+    else:
+        return False
+
+def is_logged_in():
+    username = request.cookies.get('username')
+    password = request.cookies.get('password')
+
+    return are_credentials_good(username, password)
+
+@app.route("/login", methods=['GET', 'POST'])
 def login():
-    return render_template('login.html')
+
+    username = request.form.get('username')
+    password = request.form.get('password')
+
+    login_default = False
+    if not username and not password:
+        login_default = True 
+ 
+    good_credentials = are_credentials_good(username, password)
+
+    if good_credentials:
+        response = make_response(redirect(url_for('root')))
+        response.set_cookie('username', username)
+        response.set_cookie('password', password)
+        return response
+    else:
+        return render_template(
+            'login.html',
+            logged_in=good_credentials,
+            login_default=login_default)
+
 
 @app.route("/logout")
 def logout():
-    return render_template('logout.html')
+    template = render_template(
+        'logout.html',
+        logged_in=False)
 
-@app.route("/create_account")
+    response = make_response(template)
+
+    response.set_cookie('username', '', expires=0)
+    response.set_cookie('password', '', expires=0) 
+
+    return response
+
+
+@app.route("/create_account", methods=['GET', 'POST'])
 def create_account():
-    return render_template('create_account.html')
+    
+    form = request.form.to_dict()
 
-@app.route("/create_message")
+    username_exists = False
+    passwords_different = False
+
+    if form and form['password1'] == form['password2']:
+        print('enter if')
+        try:
+            print('enter try')
+            db_url = "postgresql://postgres:pass@postgres:5432"
+            engine = sqlalchemy.create_engine(db_url, connect_args={
+                'application_name': '__init__.py create_account()',
+            })
+            connection = engine.connect()
+
+            # Fetch the most recent 20 messages for the current page
+            connection.execute(text(
+                "INSERT INTO users (name, screen_name, password) "
+                "VALUES (:name, :username, :password1);"
+            ), form) 
+
+            connection.commit()
+
+            connection.close()
+            
+            response = make_response(redirect(url_for('root')))
+            response.set_cookie('username', form['username'])
+            response.set_cookie('password', form['password1'])
+            return response
+
+        except IntegrityError as e:
+            print("error inserting user:", e)
+            username_exists = True
+    elif form:
+        passwords_different = True
+
+    return render_template(
+        'create_account.html',
+        username_exists=username_exists,
+        passwords_different=passwords_different,
+        logged_in=is_logged_in())
+
+
+@app.route("/create_message", methods=['GET', 'POST'])
 def create_message():
-    return render_template('create_message.html')
+    if is_logged_in() and request.form.get('tweet'):
 
-@app.route("/search")
+        tweet_content = request.form.get('tweet')
+
+        db_url = "postgresql://postgres:pass@postgres:5432"
+        engine = sqlalchemy.create_engine(db_url, connect_args={
+           'application_name': '__init__.py create_message()',
+        })
+        connection = engine.connect()
+
+        username = request.cookies.get('username')
+        
+        current_time = datetime.datetime.utcnow()
+
+        result = connection.execute(text(
+            "SELECT id_users, screen_name "
+            "FROM users "
+            "WHERE screen_name=:username "
+        ), {'username': username})
+
+        for row in result.fetchall():
+            user_id = row[0]
+
+        print("user id ::: ", user_id)
+
+        connection.execute(text(
+            "INSERT INTO tweets (id_users, text, created_at, lang) "
+            "VALUES (:id_users, :text, :created_at, 'en');"
+            ), {'id_users': user_id, 'text': tweet_content, 'created_at': current_time})
+
+        connection.commit()
+
+        connection.close()
+
+
+    return render_template('create_message.html', logged_in=is_logged_in())
+
+
+@app.route("/search", methods=['GET', 'POST'])
 def search():
-    return render_template('search.html')
+    page = int(request.args.get('page', 1))  # Get the page number from the query parameter, default to 1
+    per_page = 20  # Number of messages per page
+
+    search_query = request.args.get('search_query')
+
+    db_url = "postgresql://postgres:pass@postgres:5432"
+    engine = sqlalchemy.create_engine(db_url, connect_args={
+        'application_name': '__init__.py root()',
+    })  
+    connection = engine.connect()
+
+    # Calculate OFFSET based on the page number
+    offset = (page - 1) * per_page
+
+    # Fetch the most recent 20 messages for the current page
+    result = connection.execute(text(
+        "SELECT "
+            "u.name, "
+            "u.screen_name, "
+            "ts_headline('english', t.text, plainto_tsquery(:search_query), 'StartSel=<span> StopSel=</span>') AS highlighted_text, "
+            "t.created_at, "
+            "ts_rank(to_tsvector('english', t.text), plainto_tsquery(:search_query)) AS rank "
+        "FROM "
+            "tweets t "
+        "JOIN "
+            "users u USING (id_users) "
+        "WHERE "
+            "to_tsvector('english', t.text) @@ plainto_tsquery(:search_query) "
+        "ORDER BY "
+            "rank DESC "
+        "LIMIT :per_page OFFSET :offset;"
+    ), {'per_page': per_page, 'offset': offset, 'search_query': search_query})
+    print(per_page, offset)
+
+    connection.close()
+
+    rows = result.fetchall()
+
+    tweets = []
+    for row in rows:
+        tweets.append({
+            'user_name': row[0],
+            'screen_name': row[1],
+            'text': bleach.clean(row[2], tags=['p', 'br', 'a', 'b', 'span'], attributes={'a': ['href']}).replace("<span>", "<span class=highlight>"),
+            'created_at': row[3]
+         })  
+
+    # Check if there are more messages to display on next pages
+    next_page_url = None
+    if len(rows) == per_page:
+        next_page_url = url_for('search', search_query=search_query, page=page + 1)
+
+    return render_template('search.html', 
+        tweets=tweets, 
+        next_page_url=next_page_url,
+        logged_in=is_logged_in())         
 
 
-@app.route("/static/<path:filename>")
-def staticfiles(filename):
-    return send_from_directory(app.config["STATIC_FOLDER"], filename)
+@app.route('/trending')
+def trending():
+    page = int(request.args.get('page', 1))  # Get the page number from the query parameter, default to 1
+    per_page = 20  # Number of messages per page
+    offset = (page - 1) * per_page
 
 
-@app.route("/media/<path:filename>")
-def mediafiles(filename):
-    return send_from_directory(app.config["MEDIA_FOLDER"], filename)
+    db_url = "postgresql://postgres:pass@postgres:5432"
+    engine = sqlalchemy.create_engine(db_url, connect_args={
+        'application_name': '__init__.py root()',
+    })
+    connection = engine.connect()
+
+    result = connection.execute(text(
+        "SELECT tag, COUNT(id_tweets) count_tags, "
+        "ROW_NUMBER() OVER (ORDER BY COUNT(id_tweets) DESC, tag) AS rank "
+        "FROM tweet_tags "
+        "GROUP BY tag "
+        "ORDER BY count_tags DESC, tag "
+        "LIMIT 20; "
+        )) 
+
+    connection.close()
+
+    rows = result.fetchall()
+
+    tags = []
+    for row in rows:
+        tags.append({
+            'tag': row[0],
+            'count': row[1],
+            'rank': row[2],
+            'url': "/search?search_query=%23" + row[0][1:]
+         })
 
 
-@app.route("/upload", methods=["GET", "POST"])
-def upload_file():
-    if request.method == "POST":
-        file = request.files["file"]
-        filename = secure_filename(file.filename)
-        file.save(os.path.join(app.config["MEDIA_FOLDER"], filename))
-    return """
-    <!doctype html>
-    <title>upload new File</title>
-    <form action="" method=post enctype=multipart/form-data>
-      <p><input type=file name=file><input type=submit value=Upload>
-    </form>
-    """
+    return render_template('trending.html',
+        tags=tags,
+        logged_in=is_logged_in())
+
+# @app.route("/static/<path:filename>")
+# def staticfiles(filename):
+#     return send_from_directory(app.config["STATIC_FOLDER"], filename)
+#
+#
+# @app.route("/media/<path:filename>")
+# def mediafiles(filename):
+#     return send_from_directory(app.config["MEDIA_FOLDER"], filename)
+#
+#
+# @app.route("/upload", methods=["GET", "POST"])
+# def upload_file():
+#     if request.method == "POST":
+#         file = request.files["file"]
+#         filename = secure_filename(file.filename)
+#         file.save(os.path.join(app.config["MEDIA_FOLDER"], filename))
+#     return """
+#     <!doctype html>
+#     <title>upload new File</title>
+#     <form action="" method=post enctype=multipart/form-data>
+#       <p><input type=file name=file><input type=submit value=Upload>
+#     </form>
+#     """
+

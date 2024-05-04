@@ -1,5 +1,12 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h2>Create Message</h2>
+<div class="centered-container">
+    <h2>Create Message</h2>
+    <form class="tweet-form" action="/create_message" method="POST">
+        <textarea rows="10" id="tweet" name="tweet">Enter your tweet here</textarea>
+        <input type="submit" value="Send Tweet"> 
+    </form>
+        
+</div>
 {% endblock %}

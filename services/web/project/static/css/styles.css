@@ -1,3 +1,13 @@
+.heading {
+    postition: absolute;
+    left: 30%;
+}
+
+.centered-container {
+    width: 70%;
+    margin: 0 auto;
+}
+
 .tweet {
     border: 1px solid #ccc;
     border-radius: 5px;
@@ -21,9 +31,127 @@
 .tweet-text {
     margin-top: 5px;
     margin-bottom: 10px;
+    word-wrap: break-word;
 }
 
 .created-at {
     color: #999;
     font-size: 0.8em;
 }
+
+/* Reset default margin and padding */
+body, nav, ol {
+    margin: 0;
+    padding: 0;
+}
+
+/* Reset default margin and padding */
+body, nav, ol, header {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    padding-bottom: 40px;
+    font-family: "Segoe UI", Arial, sans-serif;
+}
+
+.navbar {
+    background-color: #1DA1F2; /* Twitter blue */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+}
+
+.navbar-title {
+    margin: 0;
+    color: white;
+}
+
+.navbar-links {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+.navbar-links li {
+    display: inline;
+    margin-left: 10px;
+}
+
+.navbar-links li:first-child {
+    margin-left: 0;
+}
+
+.navbar-links li a {
+    text-decoration: none;
+    color: white;
+}
+
+.navbar-links li a:hover {
+    text-decoration: underline;
+}
+
+.error-message {
+    color: red;
+}
+
+.success-message {
+    color: green;
+}
+
+form {
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+input, textarea {
+    width: 100%;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.highlight {
+    background-color: yellow;
+}
+
+.hashtag-table {
+    width: 60%;
+    border-collapse: collapse;
+    margin: 0 auto;
+
+}
+
+.hashtag-table th, .hashtag-table td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.hashtag-table th {
+    background-color: #f2f2f2;
+}
+
+.hashtag-table tr:hover {
+    background-color: #f5f5f5;
+}
+
+.hashtag-link {
+    text-decoration: none;
+    color: #007bff;
+}
+
+.rank {
+    display: inline-block;
+    width: 10%;
+}
+
