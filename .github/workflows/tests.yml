@@ -1,4 +1,4 @@
-name: tests_dev_containers
+name: tests
 on:
   push:
     branches: ['*']
