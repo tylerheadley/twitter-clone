@@ -71,17 +71,17 @@ def root():
             'screen_name': row[1],
             'text': row[2],
             'created_at': row[3]
-         })
+        })
 
     # Check if there are more messages to display on next pages
     next_page_url = None
     if len(rows) == per_page:
         next_page_url = url_for('root', page=page + 1)
 
-    return render_template('index.html', 
-        tweets=tweets, 
-        next_page_url=next_page_url,
-        logged_in=is_logged_in())
+    return render_template('index.html',
+                           tweets=tweets,
+                           next_page_url=next_page_url,
+                           logged_in=is_logged_in())
 
 
 def are_credentials_good(username, password):
@@ -102,11 +102,13 @@ def are_credentials_good(username, password):
     else:
         return False
 
+
 def is_logged_in():
     username = request.cookies.get('username')
     password = request.cookies.get('password')
 
     return are_credentials_good(username, password)
+
 
 @app.route("/login", methods=['GET', 'POST'])
 def login():
@@ -116,8 +118,8 @@ def login():
 
     login_default = False
     if not username and not password:
-        login_default = True 
- 
+        login_default = True
+
     good_credentials = are_credentials_good(username, password)
 
     if good_credentials:
@@ -141,14 +143,14 @@ def logout():
     response = make_response(template)
 
     response.set_cookie('username', '', expires=0)
-    response.set_cookie('password', '', expires=0) 
+    response.set_cookie('password', '', expires=0)
 
     return response
 
 
 @app.route("/create_account", methods=['GET', 'POST'])
 def create_account():
-    
+
     form = request.form.to_dict()
 
     username_exists = False
@@ -168,12 +170,12 @@ def create_account():
             connection.execute(text(
                 "INSERT INTO users (name, screen_name, password) "
                 "VALUES (:name, :username, :password1);"
-            ), form) 
+            ), form)
 
             connection.commit()
 
             connection.close()
-            
+
             response = make_response(redirect(url_for('root')))
             response.set_cookie('username', form['username'])
             response.set_cookie('password', form['password1'])
@@ -200,12 +202,12 @@ def create_message():
 
         db_url = "postgresql://postgres:pass@postgres:5432"
         engine = sqlalchemy.create_engine(db_url, connect_args={
-           'application_name': '__init__.py create_message()',
+            'application_name': '__init__.py create_message()',
         })
         connection = engine.connect()
 
         username = request.cookies.get('username')
-        
+
         current_time = datetime.datetime.utcnow()
 
         result = connection.execute(text(
@@ -222,12 +224,11 @@ def create_message():
         connection.execute(text(
             "INSERT INTO tweets (id_users, text, created_at, lang) "
             "VALUES (:id_users, :text, :created_at, 'en');"
-            ), {'id_users': user_id, 'text': tweet_content, 'created_at': current_time})
+        ), {'id_users': user_id, 'text': tweet_content, 'created_at': current_time})
 
         connection.commit()
 
         connection.close()
-
 
     return render_template('create_message.html', logged_in=is_logged_in())
 
@@ -242,7 +243,7 @@ def search():
     db_url = "postgresql://postgres:pass@postgres:5432"
     engine = sqlalchemy.create_engine(db_url, connect_args={
         'application_name': '__init__.py root()',
-    })  
+    })
     connection = engine.connect()
 
     # Calculate OFFSET based on the page number
@@ -251,19 +252,14 @@ def search():
     # Fetch the most recent 20 messages for the current page
     result = connection.execute(text(
         "SELECT "
-            "u.name, "
-            "u.screen_name, "
-            "ts_headline('english', t.text, plainto_tsquery(:search_query), 'StartSel=<span> StopSel=</span>') AS highlighted_text, "
-            "t.created_at, "
-            "ts_rank(to_tsvector('english', t.text), plainto_tsquery(:search_query)) AS rank "
-        "FROM "
-            "tweets t "
-        "JOIN "
-            "users u USING (id_users) "
-        "WHERE "
-            "to_tsvector('english', t.text) @@ plainto_tsquery(:search_query) "
-        "ORDER BY "
-            "rank DESC "
+        "u.name, u.screen_name, "
+        "ts_headline('english', t.text, plainto_tsquery(:search_query), 'StartSel=<span> StopSel=</span>') AS highlighted_text, "
+        "t.created_at, "
+        "ts_rank(to_tsvector('english', t.text), plainto_tsquery(:search_query)) AS rank "
+        "FROM tweets t "
+        "JOIN users u USING (id_users) "
+        "WHERE to_tsvector('english', t.text) @@ plainto_tsquery(:search_query) "
+        "ORDER BY rank DESC "
         "LIMIT :per_page OFFSET :offset;"
     ), {'per_page': per_page, 'offset': offset, 'search_query': search_query})
     print(per_page, offset)
@@ -279,26 +275,21 @@ def search():
             'screen_name': row[1],
             'text': bleach.clean(row[2], tags=['p', 'br', 'a', 'b', 'span'], attributes={'a': ['href']}).replace("<span>", "<span class=highlight>"),
             'created_at': row[3]
-         })  
+        })
 
     # Check if there are more messages to display on next pages
     next_page_url = None
     if len(rows) == per_page:
         next_page_url = url_for('search', search_query=search_query, page=page + 1)
 
-    return render_template('search.html', 
-        tweets=tweets, 
-        next_page_url=next_page_url,
-        logged_in=is_logged_in())         
+    return render_template('search.html',
+                           tweets=tweets,
+                           next_page_url=next_page_url,
+                           logged_in=is_logged_in())
 
 
 @app.route('/trending')
 def trending():
-    page = int(request.args.get('page', 1))  # Get the page number from the query parameter, default to 1
-    per_page = 20  # Number of messages per page
-    offset = (page - 1) * per_page
-
-
     db_url = "postgresql://postgres:pass@postgres:5432"
     engine = sqlalchemy.create_engine(db_url, connect_args={
         'application_name': '__init__.py root()',
@@ -312,7 +303,7 @@ def trending():
         "GROUP BY tag "
         "ORDER BY count_tags DESC, tag "
         "LIMIT 20; "
-        )) 
+    ))
 
     connection.close()
 
@@ -325,12 +316,11 @@ def trending():
             'count': row[1],
             'rank': row[2],
             'url': "/search?search_query=%23" + row[0][1:]
-         })
-
+        })
 
     return render_template('trending.html',
-        tags=tags,
-        logged_in=is_logged_in())
+                           tags=tags,
+                           logged_in=is_logged_in())
 
 # @app.route("/static/<path:filename>")
 # def staticfiles(filename):
@@ -355,4 +345,3 @@ def trending():
 #       <p><input type=file name=file><input type=submit value=Upload>
 #     </form>
 #     """
-
