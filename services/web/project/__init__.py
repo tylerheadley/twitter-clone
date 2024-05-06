@@ -10,6 +10,7 @@ from flask import (
     redirect
 )
 import bleach
+import re
 import datetime
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import IntegrityError
@@ -38,7 +39,11 @@ db = SQLAlchemy(app)
 
 @app.route("/")
 def root():
-    page = int(request.args.get('page', 1))  # Get the page number from the query parameter, default to 1
+    try:
+        page = int(request.args.get('page', 1))  # Get the page number from the query parameter, default to 1
+    except:
+        page = 1
+
     per_page = 20  # Number of messages per page
 
     db_url = "postgresql://postgres:pass@postgres:5432"
@@ -48,15 +53,14 @@ def root():
     connection = engine.connect()
 
     # Calculate OFFSET based on the page number
-    offset = (page - 1) * per_page
+    offset = max(0,(page - 1) * per_page)
 
     # Fetch the most recent 20 messages for the current page
     result = connection.execute(text(
         "SELECT u.name, u.screen_name, t.text, t.created_at "
         "FROM tweets t "
         "JOIN users u USING (id_users) "
-        "WHERE t.lang = 'en' "
-        "ORDER BY created_at DESC, u.screen_name, t.text "
+        "ORDER BY created_at DESC, u.screen_name "
         "LIMIT :per_page OFFSET :offset;"
     ), {'per_page': per_page, 'offset': offset})
 
@@ -78,9 +82,14 @@ def root():
     if len(rows) == per_page:
         next_page_url = url_for('root', page=page + 1)
 
+    prev_page_url = None
+    if page > 1:
+        prev_page_url = url_for('root', page=page - 1)
+
     return render_template('index.html',
                            tweets=tweets,
                            next_page_url=next_page_url,
+                           prev_page_url=prev_page_url,
                            logged_in=is_logged_in())
 
 
@@ -91,6 +100,7 @@ def are_credentials_good(username, password):
     })
     connection = engine.connect()
 
+    # index only scan using idx_username_password
     result = connection.execute(text(
         "SELECT screen_name, password "
         "FROM users "
@@ -157,16 +167,13 @@ def create_account():
     passwords_different = False
 
     if form and form['password1'] == form['password2']:
-        print('enter if')
         try:
-            print('enter try')
             db_url = "postgresql://postgres:pass@postgres:5432"
             engine = sqlalchemy.create_engine(db_url, connect_args={
                 'application_name': '__init__.py create_account()',
             })
             connection = engine.connect()
 
-            # Fetch the most recent 20 messages for the current page
             connection.execute(text(
                 "INSERT INTO users (name, screen_name, password) "
                 "VALUES (:name, :username, :password1);"
@@ -200,6 +207,12 @@ def create_message():
 
         tweet_content = request.form.get('tweet')
 
+        # Define the regular expression pattern for hashtags
+        hashtag_pattern = r'\B#\w+'
+
+        # Find all matches of the pattern in the text
+        hashtags = list(set(re.findall(hashtag_pattern, tweet_content)))
+
         db_url = "postgresql://postgres:pass@postgres:5432"
         engine = sqlalchemy.create_engine(db_url, connect_args={
             'application_name': '__init__.py create_message()',
@@ -210,6 +223,7 @@ def create_message():
 
         current_time = datetime.datetime.utcnow()
 
+        # index scan using idx_username_password
         result = connection.execute(text(
             "SELECT id_users, screen_name "
             "FROM users "
@@ -219,12 +233,23 @@ def create_message():
         for row in result.fetchall():
             user_id = row[0]
 
-        print("user id ::: ", user_id)
+        result = connection.execute(text(
+            "SELECT last_value FROM tweets_id_tweets_seq "
+        ))
+
+        for row in result.fetchall():
+            tweet_id = row[0]
 
         connection.execute(text(
             "INSERT INTO tweets (id_users, text, created_at, lang) "
             "VALUES (:id_users, :text, :created_at, 'en');"
         ), {'id_users': user_id, 'text': tweet_content, 'created_at': current_time})
+
+        for hashtag in hashtags:
+            connection.execute(text(
+                "INSERT INTO tweet_tags (id_tweets, tag) "
+                "VALUES (:id_tweets, :tag) "
+            ), {'id_tweets': tweet_id, 'tag': hashtag})
 
         connection.commit()
 
@@ -235,7 +260,10 @@ def create_message():
 
 @app.route("/search", methods=['GET', 'POST'])
 def search():
-    page = int(request.args.get('page', 1))  # Get the page number from the query parameter, default to 1
+    try:
+        page = int(request.args.get('page', 1))  # Get the page number from the query parameter, default to 1
+    except:
+        page = 1
     per_page = 20  # Number of messages per page
 
     search_query = request.args.get('search_query')
@@ -247,22 +275,35 @@ def search():
     connection = engine.connect()
 
     # Calculate OFFSET based on the page number
-    offset = (page - 1) * per_page
+    offset = max(0,(page - 1) * per_page)
 
-    # Fetch the most recent 20 messages for the current page
-    result = connection.execute(text(
-        "SELECT "
-        "u.name, u.screen_name, "
-        "ts_headline('english', t.text, plainto_tsquery(:search_query), 'StartSel=<span> StopSel=</span>') AS highlighted_text, "
-        "t.created_at, "
-        "ts_rank(to_tsvector('english', t.text), plainto_tsquery(:search_query)) AS rank "
-        "FROM tweets t "
-        "JOIN users u USING (id_users) "
-        "WHERE to_tsvector('english', t.text) @@ plainto_tsquery(:search_query) "
-        "ORDER BY rank DESC "
-        "LIMIT :per_page OFFSET :offset;"
-    ), {'per_page': per_page, 'offset': offset, 'search_query': search_query})
-    print(per_page, offset)
+    is_hashtag_search = request.args.get('hashtag_search')
+    if is_hashtag_search == '1':
+        result = connection.execute(text(
+            "SELECT "
+            "u.name, u.screen_name, "
+            "ts_headline('english', t.text, plainto_tsquery(:search_query), 'StartSel=<span> StopSel=</span>') AS highlighted_text, "
+            "t.created_at "
+            "FROM tweets t "
+            "JOIN users u USING (id_users) "
+            "WHERE t.text ILIKE '%#' || :search_query || '%' "
+            "ORDER BY created_at DESC "
+            "LIMIT :per_page OFFSET :offset;"
+        ), {'per_page': per_page, 'offset': offset, 'search_query': search_query})
+    else:
+        # Fetch the most recent 20 messages for the current page
+        result = connection.execute(text(
+            "SELECT "
+            "u.name, u.screen_name, "
+            "ts_headline('english', t.text, plainto_tsquery(:search_query), 'StartSel=<span> StopSel=</span>') AS highlighted_text, "
+            "t.created_at, "
+            "ts_rank(to_tsvector('english', t.text), plainto_tsquery(:search_query)) AS rank "
+            "FROM tweets t "
+            "JOIN users u USING (id_users) "
+            "WHERE to_tsvector('english', t.text) @@ plainto_tsquery(:search_query) "
+            "ORDER BY rank DESC "
+            "LIMIT :per_page OFFSET :offset;"
+        ), {'per_page': per_page, 'offset': offset, 'search_query': search_query})
 
     connection.close()
 
@@ -280,11 +321,16 @@ def search():
     # Check if there are more messages to display on next pages
     next_page_url = None
     if len(rows) == per_page:
-        next_page_url = url_for('search', search_query=search_query, page=page + 1)
+        next_page_url = url_for('search', search_query=search_query, hashtag_search=is_hashtag_search, page=page + 1)
+
+    prev_page_url = None
+    if page > 1:
+        prev_page_url = url_for('search',search_query=search_query, hashtag_search=is_hashtag_search, page=page - 1) 
 
     return render_template('search.html',
                            tweets=tweets,
                            next_page_url=next_page_url,
+                           prev_page_url=prev_page_url,
                            logged_in=is_logged_in())
 
 
@@ -297,8 +343,7 @@ def trending():
     connection = engine.connect()
 
     result = connection.execute(text(
-        "SELECT tag, COUNT(id_tweets) count_tags, "
-        "ROW_NUMBER() OVER (ORDER BY COUNT(id_tweets) DESC, tag) AS rank "
+        "SELECT tag, COUNT(id_tweets) count_tags "
         "FROM tweet_tags "
         "GROUP BY tag "
         "ORDER BY count_tags DESC, tag "
@@ -310,13 +355,15 @@ def trending():
     rows = result.fetchall()
 
     tags = []
+    i = 1
     for row in rows:
         tags.append({
             'tag': row[0],
             'count': row[1],
-            'rank': row[2],
-            'url': "/search?search_query=%23" + row[0][1:]
+            'rank': i,
+            'url': "/search?hashtag_search=1&search_query=" + row[0][1:]
         })
+        i += 1
 
     return render_template('trending.html',
                            tags=tags,

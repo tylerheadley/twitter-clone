@@ -155,3 +155,32 @@ input, textarea {
     width: 10%;
 }
 
+/* Button Styles */
+.btn {
+  padding: 10px 20px;
+  background-color: #4CAF50; /* Green */
+  border: none;
+  color: white;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 2px;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+/* Next Button */
+.next {
+  background-color: #4CAF50;
+}
+
+/* Previous Button */
+.prev {
+  background-color: #f44336; /* Red */
+}
+
+/* Button Hover Effect */
+.btn:hover {
+  opacity: 0.8;
+}

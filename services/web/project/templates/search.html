@@ -19,9 +19,13 @@
         </div>
         {% endfor %}
 
-        {% if next_page_url %}
-        <a href="{{ next_page_url }}">Next Page</a>
+        {% if prev_page_url %}
+        <a class="prev btn" href="{{ prev_page_url }}">Previous Page</a>
         {% endif %}
+        {% if next_page_url %}
+        <a class="next btn" href="{{ next_page_url }}">Next Page</a>
+        {% endif %}
+
     </div>
 </div>
 {% endblock %}

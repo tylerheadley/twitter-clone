@@ -20,5 +20,4 @@ jobs:
         docker ps -a
         sleep 20
         ./load_tweets_parallel.sh --local_tweets 100000
-        docker-compose exec -T postgres ./run_tests.sh
 

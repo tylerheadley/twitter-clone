@@ -176,6 +176,14 @@ if __name__ == '__main__':
         }   
 
         insert_tweet(connection,tweet)
+    
+    sql = sqlalchemy.sql.text(
+        ''' 
+        SELECT SETVAL('users_id_users_seq', (SELECT MAX(id_users) FROM users));
+        SELECT SETVAL('tweets_id_tweets_seq', (SELECT MAX(id_tweets) FROM tweets));
+        ''')
 
+    connection.execute(sql)
+    
     connection.close()
 
