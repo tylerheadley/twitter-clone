@@ -181,6 +181,7 @@ if __name__ == '__main__':
         ''' 
         SELECT SETVAL('users_id_users_seq', (SELECT MAX(id_users) FROM users));
         SELECT SETVAL('tweets_id_tweets_seq', (SELECT MAX(id_tweets) FROM tweets));
+        REFRESH MATERIALIZED VIEW tweet_tags_counts;
         ''')
 
     connection.execute(sql)
