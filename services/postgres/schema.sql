@@ -32,4 +32,11 @@ CREATE TABLE tweet_tags (
 );
 CREATE INDEX idx_tweet_tags_tag_id_tweets ON tweet_tags (tag, id_tweets);
 
+CREATE MATERIALIZED VIEW tweet_tags_counts AS
+SELECT tag, COUNT(id_tweets) AS count_tags
+FROM tweet_tags
+GROUP BY tag;
+
+CREATE INDEX idx_tweet_tags_counts_tag ON tweet_tags_counts (tag);
+
 COMMIT;

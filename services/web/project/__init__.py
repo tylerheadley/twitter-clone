@@ -343,9 +343,8 @@ def trending():
     connection = engine.connect()
 
     result = connection.execute(text(
-        "SELECT tag, COUNT(id_tweets) count_tags "
-        "FROM tweet_tags "
-        "GROUP BY tag "
+        "SELECT tag, count_tags "
+        "FROM tweet_tags_counts "
         "ORDER BY count_tags DESC, tag "
         "LIMIT 20; "
     ))
