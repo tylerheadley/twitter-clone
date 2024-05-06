@@ -41,7 +41,7 @@ db = SQLAlchemy(app)
 def root():
     try:
         page = int(request.args.get('page', 1))  # Get the page number from the query parameter, default to 1
-    except:
+    except ValueError:
         page = 1
 
     per_page = 20  # Number of messages per page
@@ -53,7 +53,7 @@ def root():
     connection = engine.connect()
 
     # Calculate OFFSET based on the page number
-    offset = max(0,(page - 1) * per_page)
+    offset = max(0, (page - 1) * per_page)
 
     # Fetch the most recent 20 messages for the current page
     result = connection.execute(text(
@@ -262,7 +262,7 @@ def create_message():
 def search():
     try:
         page = int(request.args.get('page', 1))  # Get the page number from the query parameter, default to 1
-    except:
+    except ValueError:
         page = 1
     per_page = 20  # Number of messages per page
 
@@ -275,7 +275,7 @@ def search():
     connection = engine.connect()
 
     # Calculate OFFSET based on the page number
-    offset = max(0,(page - 1) * per_page)
+    offset = max(0, (page - 1) * per_page)
 
     is_hashtag_search = request.args.get('hashtag_search')
     if is_hashtag_search == '1':
@@ -325,7 +325,7 @@ def search():
 
     prev_page_url = None
     if page > 1:
-        prev_page_url = url_for('search',search_query=search_query, hashtag_search=is_hashtag_search, page=page - 1) 
+        prev_page_url = url_for('search', search_query=search_query, hashtag_search=is_hashtag_search, page=page - 1)
 
     return render_template('search.html',
                            tweets=tweets,
