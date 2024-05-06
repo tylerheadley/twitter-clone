@@ -251,7 +251,7 @@ def create_message():
                 "VALUES (:id_tweets, :tag) "
             ), {'id_tweets': tweet_id, 'tag': hashtag})
 
-        connection.execute(text("REFRESH MATERIALIZED VIEW tweet_tags_counts;"))
+        # connection.execute(text("REFRESH MATERIALIZED VIEW tweet_tags_counts;"))
 
         connection.commit()
 
