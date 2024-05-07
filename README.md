@@ -1,8 +1,12 @@
-# Flask on Docker
+# Twitter Clone
 
 [![tests](https://github.com/tylerheadley/twitter-clone/actions/workflows/tests.yml/badge.svg)](https://github.com/tylerheadley/twitter-clone/actions/workflows/tests.yml)
 
 ## Overview
+
+This project replicates Twitter's core functionality using Instagram's basic architecture and tech stack. For this project, I practiced a 
+
+
 
 This repository contains an implementation of a Flask web application Dockerized for both development and production environments. Following the the tutorial from [testdriven.io](https://testdriven.io/blog/dockerizing-flask-with-postgres-gunicorn-and-nginx), the project incorporates Flask, Postgres, Gunicorn, and Nginx, demonstrating how to handle static and user-uploaded media files. The development environment uses Flask's built-in server, while the production setup uses the Gunicorn HTTP server and Nginx as a reverse proxy. The final result is a webpage where users can upload image files, which are then stored using Docker volumes and can be retrieved.
 

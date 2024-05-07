@@ -37,6 +37,6 @@ SELECT tag, COUNT(id_tweets) AS count_tags
 FROM tweet_tags
 GROUP BY tag;
 
-CREATE INDEX idx_tweet_tags_counts_tag ON tweet_tags_counts (tag);
+CREATE INDEX idx_tweet_tags_counts ON tweet_tags_counts (count_tags desc, tag);
 
 COMMIT;

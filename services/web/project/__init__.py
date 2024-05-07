@@ -26,17 +26,6 @@ app.config.from_object("project.config.Config")
 db = SQLAlchemy(app)
 
 
-# class User(db.Model):
-#     __tablename__ = "users"
-#
-#     id = db.Column(db.Integer, primary_key=True)
-#     email = db.Column(db.String(128), unique=True, nullable=False)
-#     active = db.Column(db.Boolean(), default=True, nullable=False)
-#
-#     def __init__(self, email):
-#         self.email = email
-
-
 @app.route("/")
 def root():
     try:
@@ -251,8 +240,6 @@ def create_message():
                 "VALUES (:id_tweets, :tag) "
             ), {'id_tweets': tweet_id, 'tag': hashtag})
 
-        # connection.execute(text("REFRESH MATERIALIZED VIEW tweet_tags_counts;"))
-
         connection.commit()
 
         connection.close()
@@ -289,7 +276,6 @@ def search():
             "FROM tweets t "
             "JOIN users u USING (id_users) "
             "WHERE t.text ILIKE '%#' || :search_query || '%' "
-            "ORDER BY created_at DESC "
             "LIMIT :per_page OFFSET :offset;"
         ), {'per_page': per_page, 'offset': offset, 'search_query': search_query})
     else:
