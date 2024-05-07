@@ -98,6 +98,7 @@ $ docker-compose down
 You may include the -v flag at the end of this command to delete the postgres volume.
 
 For production, use the docker-compose.prod.yml file instead. 
+The production environment includes a few differences from the development build. The most substantial difference is the use of Nginx and Gunicorn as a WSGI server.
 Note that you will need to add your own `.env.prod.db` text file containing database credentials. My file has 3 environment variables, `POSTGRES_USER`,`POSTGRES_PASSWORD`, and `PGUSER`.
 
 Build and run the production containers, and initialize the PostgreSQL database:
