@@ -76,8 +76,6 @@ There is also a view not shown in the diagram called `tweet_tags_count` that pre
 An important part of this project was to carefully design indexes on each table to enable efficient query plans so that user requests can be processed in milliseconds, even when tables contain millions of rows. For the most part, standard B-tree indexes were chosen appropriately so that the optimal query plans would be made possible, but a RUM index (similar to a GIN index but with some improvements) was used for the search functionality to search and rank the most relevant tweets for a given search query. The goal was to choose appropriate indexes so that Index Only Scans would be made possible for all queries and the Merge Join algorithm can be used for JOINs. All indexes used are contained within the [`schema.sql`](services/postgres/schema.sql). For testing, over 10 million rows of data was loaded into the `tweet_tags` table and over 4 million rows into the `tweets` and `users` tables; despite the large quantity of data, all queries used by the web service completed in under a second.
 
 ## Build Instruction
-:q
-:q
 
 **To bring up the services, follow these steps:**
 
