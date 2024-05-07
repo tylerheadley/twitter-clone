@@ -33,7 +33,7 @@ See the live website [here](http://ec2-52-15-240-149.us-east-2.compute.amazonaws
 
 ## Data 
 
-The database is initially seeded with data using a script after spinning up the containers. There are two options for the source of the data. The `data\` folder in this repo contains about 100,000 real tweets from January 1st-10th, 2021. If more data is desired, there is an option to instead insert randomly generated tweets. These tweets consist of 5-12 random english words, followed by 1-4 randomly generated hashtags. 
+The database is initially seeded with data using a script after spinning up the containers. There are two options for the source of the data. The `data/` folder in this repo contains about 100,000 real tweets from January 1st-10th, 2021. If more data is desired, there is an option to instead insert randomly generated tweets. These tweets consist of 5-12 random english words, followed by 1-4 randomly generated hashtags. 
 
 ## Features 
 
