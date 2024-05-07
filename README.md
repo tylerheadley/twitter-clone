@@ -16,7 +16,7 @@
 
 This project replicates Twitter's core functionality using Instagram's basic architecture and tech stack. For this project, I practiced using many skills and technologies that are useful for software engineers and data scientists.
 
-See the live website [here](http://ec2-52-15-240-149.us-east-2.compute.amazonaws.com/), hosted using an AWS EC2 instance. **Note: do not use a real password when creating an account. Passwords are not currently hashed.**
+See the live website <a href="http://google.com/](http://ec2-52-15-240-149.us-east-2.compute.amazonaws.com/" target="_blank">here</a>, hosted using an AWS EC2 instance. **Note: do not use a real password when creating an account. Passwords are not currently hashed.**
 
 ## Tech Stack 
 
