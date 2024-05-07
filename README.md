@@ -12,13 +12,13 @@
 6. [Indexes](#indexes)
 7. [Build Instructions](#build-instructions)
 
-## Overview {#overview}
+## Overview 
 
 This project replicates Twitter's core functionality using Instagram's basic architecture and tech stack. For this project, I practiced using many skills and technologies that are useful for software engineers and data scientists.
 
-See the live website ![here](http://ec2-52-15-240-149.us-east-2.compute.amazonaws.com/), hosted using an AWS EC2 instance. **Note: do not use a real password when creating an account. Passwords are not currently hashed.**
+See the live website [here](http://ec2-52-15-240-149.us-east-2.compute.amazonaws.com/), hosted using an AWS EC2 instance. **Note: do not use a real password when creating an account. Passwords are not currently hashed.**
 
-## Tech Stack {#tech-stack}
+## Tech Stack 
 
  - Python: Used for backend development.
  - Flask: Micro web framework used for server-side logic.
@@ -31,11 +31,11 @@ See the live website ![here](http://ec2-52-15-240-149.us-east-2.compute.amazonaw
  - AWS EC2: Cloud computing and hosting.
  - GitHub Actions: Implemented for continuous integration.
 
-## Data {#data}
+## Data 
 
 The database is initially seeded with data using a script after spinning up the containers. There are two options for the source of the data. The `data\` folder in this repo contains about 100,000 real tweets from January 1st-10th, 2021. If more data is desired, there is an option to instead insert randomly generated tweets. These tweets consist of 5-12 random english words, followed by 1-4 randomly generated hashtags. 
 
-## Features {#features}
+## Features 
 
 This project seeks to replicate Twitter's core CRUD (Create Read Update Delete) functionaility. This project has 7 endpoints, each facilitating a different primary function:
 
@@ -63,7 +63,7 @@ This project seeks to replicate Twitter's core CRUD (Create Read Update Delete) 
 **Trending**
  - Displays the top trending hashtags in the system.
 
-## Schema {#schema}
+## Schema 
 
 To enable this desired functionality, I designed a simple schema, shown in this E-R diagram.
 
@@ -71,11 +71,13 @@ To enable this desired functionality, I designed a simple schema, shown in this 
 
 There is also a view not shown in the diagram called `tweet_tags_count` that precomputes the counts for each hashtag usage for quick access later.
 
-## Indexes {#indexes}
+## Indexes 
 
 An important part of this project was to carefully design indexes on each table to enable efficient query plans so that user requests can be processed in milliseconds, even when tables contain millions of rows. For the most part, standard B-tree indexes were chosen appropriately so that the optimal query plans would be made possible, but a RUM index (similar to a GIN index but with some improvements) was used for the search functionality to search and rank the most relevant tweets for a given search query. The goal was to choose appropriate indexes so that Index Only Scans would be made possible for all queries and the Merge Join algorithm can be used for JOINs. All indexes used are contained within the [`schema.sql`](services/postgres/schema.sql). For testing, over 10 million rows of data was loaded into the `tweet_tags` table and over 4 million rows into the `tweets` and `users` tables; despite the large quantity of data, all queries used by the web service completed in under a second.
 
-## Build Instruction {build-instructions}
+## Build Instruction
+:q
+:q
 
 **To bring up the services, follow these steps:**
 
